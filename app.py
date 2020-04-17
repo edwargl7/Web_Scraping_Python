@@ -13,7 +13,7 @@ base_url = 'https://scienti.minciencias.gov.co/gruplac/jsp/visualiza/visualizagr
 
 
 @app.route('/basic-data/<id>')
-def get_data_page(id):
+def get_basic_data(id):
     try:
         url = base_url + str(id)
         scraping.get_data_without_filter(url)
