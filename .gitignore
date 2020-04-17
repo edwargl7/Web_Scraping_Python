@@ -1,3 +1,6 @@
+# Byte-compiled
+__pycache__/
+
 # Environments
 .env
 .venv
@@ -7,3 +10,6 @@ ENV/
 
 # IDE Files
 .idea
+
+# Logs
+*.log
