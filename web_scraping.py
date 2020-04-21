@@ -24,12 +24,12 @@ class WebScraping:
             response = urllib_request.urlopen(url, context=self.context).read()
             soup = BeautifulSoup(response, 'lxml')
             self.data_without_filter = soup
-            return True
+            return True, 200
         except Exception as ex:
             logger.error(ex)
             logger.error(str(traceback.format_exc()))
             self.data_without_filter = None
-            return False
+            return False, 400
 
     def __get_data_page_by_table(self, url, index):
         try:
@@ -51,7 +51,7 @@ class WebScraping:
         try:
             classes = self.data_without_filter.find_all("td", class_="celdaEncabezado")
             titles = [str(x.text).lower() for x in classes]
-            return titles.index(title)
+            return True, titles.index(title)
         except ValueError as ve:
             # Add exception if it doesn't exist
             logger.error(ve)
@@ -65,8 +65,8 @@ class WebScraping:
     def get_basic_data(self, url):
         try:
             title = "datos básicos"
-            index = self.__get_index_by_table_title_and_class(title)
-            df = self.__get_data_page_by_table(url, index)
+            err, index = self.__get_index_by_table_title_and_class(title)
+            err, df = self.__get_data_page_by_table(url, index)
             data_dict = df.to_dict(orient='split')['data']
             if isinstance(data_dict[0], (list, tuple)):
                 result = {key: value for (key, value) in data_dict}
