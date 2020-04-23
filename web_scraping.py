@@ -1,4 +1,5 @@
 import logging
+import re
 import ssl
 import traceback
 import urllib.request as urllib_request
@@ -14,11 +15,36 @@ logging.basicConfig(
     level=logging.DEBUG)
 logger = logging.getLogger('web_scraping')
 
+# Regular Expressions - RegEx
+REGEX_NUMBER = re.compile('^\\d*.- ')  # e.g. '1.- '
+REGEX_STATE = re.compile(' ?- ?\\(([aA|nN].*)\\)')
+# e.g. ' - (Avalado)'
+
 
 class WebScraping:
     def __init__(self):
         self.context = ssl.SSLContext()
         self.data_without_filter = None
+
+    def _data_validation(self, field_title, method_message, url):
+        try:
+            field_exists, idx, msg = self._get_index_by_table_title_and_class(
+                field_title)
+            if field_exists:
+                data_exists, df, msg = self._get_data_page_by_table(url, idx)
+                if data_exists:
+                    data_dict = df.to_dict(orient='split')['data']
+                    data_dict = data_dict[1:]
+                    return data_dict, 'data processed successfully'
+                else:
+                    return {}, msg
+            else:
+                return {}, msg
+        except Exception as ex:
+            logger.error(ex)
+            logger.error(str(traceback.format_exc()))
+            msg = 'error validating ' + method_message
+            return {}, msg
 
     def _get_data_page_by_table(self, url, index):
         try:
@@ -89,22 +115,33 @@ class WebScraping:
             logger.error(str(traceback.format_exc()))
             return {}, 'error processing basic data'
 
-    def get_institutions_list(self, url):
+    def get_list_of_institutions(self, url):
         try:
-            title = "instituciones"
-            err, index = self.__get_index_by_table_title_and_class(title)
-            err, df = self.__get_data_page_by_table(url, index)
-            data_dict = df.to_dict(orient='split')['data']
-            print(data_dict)
-            if isinstance(data_dict[0], (list, tuple)):
-                result = {key: value for (key, value) in data_dict}
+            field_title = "instituciones"
+            m_msg = 'the list of institutions'
+            institutions, msg = self._data_validation(field_title,
+                                                      m_msg, url)
+            if isinstance(institutions, (list, tuple)):
+                if len(institutions) > 0:
+                    result = {}
+                    for idx, inst in enumerate(institutions):
+                        inst = REGEX_NUMBER.sub('', inst[0])
+                        data = REGEX_STATE.split(inst)
+                        name, state = data[0], data[1]
+                        result[idx] = {
+                            'Institución': name,
+                            'Estado': state
+                        }
+                else:
+                    result = {}
+                    msg = 'table without records'
+                return result, msg
             else:
-                result = {key: value for (key, value) in enumerate(data_dict)}
-            return result
+                return institutions, msg
         except Exception as ex:
             logger.error(ex)
             logger.error(str(traceback.format_exc()))
-            return {}
+            return {}, 'error processing list of institutions'
 
     def get_members(self, url):
         # P, Q, R, W del drive
