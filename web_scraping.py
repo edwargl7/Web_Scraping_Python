@@ -18,6 +18,8 @@ logger = logging.getLogger('web_scraping')
 # Regular Expressions - RegEx
 REGEX_NUMBER = re.compile('^\\d*.- ')  # e.g. '1.- '
 REGEX_STATE = re.compile(' ?- ?\\(([aA|nN].*)\\)')
+
+
 # e.g. ' - (Avalado)'
 
 
@@ -94,22 +96,18 @@ class WebScraping:
     def get_basic_data(self, url):
         try:
             field_title = "datos básicos"
-            field_exists, idx, msg = self._get_index_by_table_title_and_class(
-                field_title)
-            if field_exists:
-                data_exists, df, msg = self._get_data_page_by_table(url, idx)
-                if data_exists:
-                    data_dict = df.to_dict(orient='split')['data']
-                    data_dict = data_dict[1:]
-                    if isinstance(data_dict[0], (list, tuple)):
-                        result = {key: value for (key, value) in data_dict}
-                    else:
-                        result = {key: value for (key, value) in enumerate(data_dict)}
-                    return result, 'data processed successfully'
+            m_msg = 'basic data'
+            data, msg = self._data_validation(field_title,
+                                              m_msg, url)
+            if isinstance(data, (list, tuple)):
+                if len(data) > 0:
+                    result = {key: value for (key, value) in data}
                 else:
-                    return {}, msg
+                    result = {}
+                    msg = 'table without records'
+                return result, msg
             else:
-                return {}, msg
+                return data, msg
         except Exception as ex:
             logger.error(ex)
             logger.error(str(traceback.format_exc()))
