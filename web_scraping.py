@@ -17,10 +17,12 @@ logger = logging.getLogger('web_scraping')
 
 # Regular Expressions - RegEx
 REGEX_NUMBER = re.compile('^\\d*.- ')  # e.g. '1.- '
-REGEX_STATE = re.compile(' ?- ?\\(([aA|nN].*)\\)')
-
-
-# e.g. ' - (Avalado)'
+REGEX_STATE = re.compile(' ?- ?\\(([aA|nN].*)\\)')  # e.g. ' - (Avalado)'
+REGEX_PLAN = re.compile('Plan de trabajo:(.*?)Estado del arte:')
+REGEX_STATE_ART = re.compile('Estado del arte:(.*?)Objetivos:')
+REGEX_OBJECTIVE = re.compile('Objetivos:(.*?)Retos:')
+REGEX_CHALLENGE = re.compile('Retos:(.*?)Visión:')
+REGEX_VISION = re.compile('Visión:(.*)?')
 
 
 class WebScraping:
@@ -141,6 +143,38 @@ class WebScraping:
             logger.error(str(traceback.format_exc()))
             return {}, 'error processing list of institutions'
 
+    def get_strategic_plan(self, url):
+        try:
+            field_title = "plan estratégico"
+            m_msg = 'the strategic plan'
+            data, msg = self._data_validation(field_title,
+                                                      m_msg, url)
+            if isinstance(data, (list, tuple)):
+                if len(data) > 0:
+                    data = data[0][0]
+                    result = {}
+                    regex_list = [REGEX_PLAN, REGEX_STATE_ART,
+                                  REGEX_OBJECTIVE, REGEX_CHALLENGE,
+                                  REGEX_VISION]
+                    title_list = ['Plan de trabajo', 'Estado del arte',
+                                  'Objetivos', 'Retos', 'Visión']
+                    for idx, regex in enumerate(regex_list):
+                        text = regex.search(data)
+                        if text:
+                            text = text.group(1)
+                            title = title_list[idx]
+                            result[title] = text.strip()
+                else:
+                    result = {}
+                    msg = 'table without records'
+                return result, msg
+            else:
+                return plan, msg
+        except Exception as ex:
+            logger.error(ex)
+            logger.error(str(traceback.format_exc()))
+            return {}, 'error processing the strategic plan'
+
     def get_members(self, url):
         # P, Q, R, W del drive
         # Nombre, Inicio-fin vinculación
@@ -159,3 +193,4 @@ class WebScraping:
             logger.error(ex)
             logger.error(str(traceback.format_exc()))
             return {}
+
