@@ -186,8 +186,8 @@ class WebScraping:
             if isinstance(lines, (list, tuple)):
                 if len(lines) > 0:
                     result = {}
-                    for idx, inst in enumerate(lines):
-                        data = REGEX_NUMBER.sub('', inst[0])
+                    for idx, investig in enumerate(lines):
+                        data = REGEX_NUMBER.sub('', investig[0])
                         result[idx] = data
                 else:
                     result = {}
@@ -202,19 +202,29 @@ class WebScraping:
 
     def get_members(self, url):
         # P, Q, R, W del drive
-        # Nombre, Inicio-fin vinculación
         try:
-            title = "integrantes del grupo"
-            err, index = self.__get_index_by_table_title_and_class(title)
-            err, df = self.__get_data_page_by_table(url, index)
-            data_dict = df.to_dict(orient='split')['data']
-            print(data_dict)
-            if isinstance(data_dict[0], (list, tuple)):
-                result = {key: value for (key, value) in data_dict}
+            field_title = "integrantes del grupo"
+            m_msg = 'group members'
+            data_members, msg = self._data_validation(field_title,
+                                                      m_msg, url)
+            data_members = data_members[1:]
+            if isinstance(data_members, (list, tuple)):
+                if len(data_members) > 0:
+                    result = {}
+                    for idx, member in enumerate(data_members):
+                        name = REGEX_NUMBER.sub('', member[0])
+                        date = member[-1]
+                        result[idx] = {
+                            'Nombre': name,
+                            'Inicio - Fin Vinculación (ColCiencias)': date
+                        }
+                else:
+                    result = {}
+                    msg = 'table without records'
+                return result, msg
             else:
-                result = {key: value for (key, value) in enumerate(data_dict)}
-            return result
+                return data_members, msg
         except Exception as ex:
             logger.error(ex)
             logger.error(str(traceback.format_exc()))
-            return {}
+            return {}, 'error processing the lines of investigation'
