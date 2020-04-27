@@ -177,6 +177,29 @@ class WebScraping:
             logger.error(str(traceback.format_exc()))
             return {}, 'error processing the strategic plan'
 
+    def get_lines_of_investigation(self, url):
+        try:
+            field_title = "líneas de investigación declaradas por el grupo"
+            m_msg = 'the list of investigation'
+            lines, msg = self._data_validation(field_title,
+                                               m_msg, url)
+            if isinstance(lines, (list, tuple)):
+                if len(lines) > 0:
+                    result = {}
+                    for idx, inst in enumerate(lines):
+                        data = REGEX_NUMBER.sub('', inst[0])
+                        result[idx] = data
+                else:
+                    result = {}
+                    msg = 'table without records'
+                return result, msg
+            else:
+                return lines, msg
+        except Exception as ex:
+            logger.error(ex)
+            logger.error(str(traceback.format_exc()))
+            return {}, 'error processing the lines of investigation'
+
     def get_members(self, url):
         # P, Q, R, W del drive
         # Nombre, Inicio-fin vinculación

@@ -67,6 +67,24 @@ def get_strategic_plan(id):
         return jsonify(response), 404
 
 
+@app.route('/lines_of_investigation/<id>')
+def get_lines_investigation(id):
+    try:
+        url = base_url + str(id)
+        scraping.get_data_without_filter(url)
+        data, msg = scraping.get_lines_of_investigation(url)
+        if data:
+            response = {'data': data, 'message': msg}
+            return jsonify(response), 200
+        else:
+            msg = 'data not found, ' + msg
+            response = {'data': data, 'message': msg}
+            return jsonify(response), 404
+    except Exception as ex:
+        response = {'message': str(ex)}
+        return jsonify(response), 404
+
+
 @app.route('/members/<id>')
 def get_members(id):
     try:
