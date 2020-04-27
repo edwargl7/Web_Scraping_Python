@@ -148,11 +148,11 @@ class WebScraping:
             field_title = "plan estratégico"
             m_msg = 'the strategic plan'
             data, msg = self._data_validation(field_title,
-                                                      m_msg, url)
+                                              m_msg, url)
             if isinstance(data, (list, tuple)):
                 if len(data) > 0:
                     data = data[0][0]
-                    result = {}
+                    result = {'Plan estratégico dividido': {}}
                     regex_list = [REGEX_PLAN, REGEX_STATE_ART,
                                   REGEX_OBJECTIVE, REGEX_CHALLENGE,
                                   REGEX_VISION]
@@ -163,13 +163,15 @@ class WebScraping:
                         if text:
                             text = text.group(1)
                             title = title_list[idx]
-                            result[title] = text.strip()
+                            result['Plan estratégico dividido'][title] = text.strip()
+
+                    result['Plan estratégico sin dividir'] = data
                 else:
                     result = {}
                     msg = 'table without records'
                 return result, msg
             else:
-                return plan, msg
+                return data, msg
         except Exception as ex:
             logger.error(ex)
             logger.error(str(traceback.format_exc()))
@@ -193,4 +195,3 @@ class WebScraping:
             logger.error(ex)
             logger.error(str(traceback.format_exc()))
             return {}
-
