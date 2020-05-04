@@ -95,6 +95,25 @@ class WebScraping:
             self.data_without_filter = None
             return False, 'it is not possible to obtain data from this url'
 
+    def get_group_title(self, url):
+        try:
+            titles = self.data_without_filter.find_all(
+                "span", class_="celdaEncabezado"
+            )
+            if len(titles):
+                title = titles[0]
+                title = title.text
+            else:
+                title = None
+            result = {
+                "Nombre del Grupo": title
+            }
+            return result, 'title found successfully'
+        except Exception as ex:
+            logger.error(ex)
+            logger.error(str(traceback.format_exc()))
+            return {}, 'error processing basic data'
+
     def get_basic_data(self, url):
         try:
             field_title = "datos básicos"

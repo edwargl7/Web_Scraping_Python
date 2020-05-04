@@ -26,6 +26,35 @@ base_url = 'https://scienti.minciencias.gov.co/gruplac/jsp/visualiza/visualizagr
 # 00000000013887
 
 
+@name_space.route('/group-name/<id>')
+class GroupName(Resource):
+    @api.doc(
+        responses={
+            200: 'OK', 404: 'Data not found',
+            500: 'It is not possible to obtain data from this url'},
+        params={
+            'id': 'Specify the Id associated with the group in Colciencias'})
+    def get(self, id):
+        try:
+            url = base_url + str(id)
+            req, msg = scraping.get_data_without_filter(url)
+            if req:
+                data, msg = scraping.get_group_title(url)
+                if data:
+                    response = {'data': data, 'message': msg}
+                    return response, 200
+                else:
+                    msg = 'data not found, ' + msg
+                    response = {'data': data, 'message': msg}
+                    return response, 404
+            else:
+                response = {'message': msg}
+                return response, 500
+        except Exception as ex:
+            msg = 'data not found, ' + str(ex)
+            response = {'message': msg}
+            return response, 404
+
 @name_space.route('/basic-data/<id>')
 class BasicData(Resource):
     @api.doc(
