@@ -247,3 +247,21 @@ class WebScraping:
             logger.error(ex)
             logger.error(str(traceback.format_exc()))
             return {}, 'error processing the lines of investigation'
+
+    def all_data_to_file(self, url, file_name):
+        try:
+            data = self.data_without_filter
+            df = pd.read_html(str(data))
+            output_file_name = 'data/{}.xlsx'.format(file_name)
+            with pd.ExcelWriter(output_file_name) as writer:
+                for ix, table in enumerate(df):
+                    sheet_name = str(table.get(0)[0])
+                    sheet_name = sheet_name.replace('/', '')
+                    if len(sheet_name) > 31:
+                        sheet_name = sheet_name[:30]
+                    table.to_excel(writer,
+                                   sheet_name=sheet_name,
+                                   header=False,
+                                   index=False)
+        except Exception as ex:
+            print(ex)

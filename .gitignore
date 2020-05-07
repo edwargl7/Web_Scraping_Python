@@ -13,3 +13,7 @@ ENV/
 
 # Logs
 *.log
+
+# Other fields
+*.xlsx
+*.csv

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, send_from_directory, abort
 from flask_restplus import Api, Resource
 
 from web_scraping import WebScraping
@@ -21,9 +21,6 @@ api = Api(app=app,
 name_space = api.namespace('api', description='Endpoints')
 scraping = WebScraping()
 base_url = 'https://scienti.minciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro='
-
-
-# 00000000013887
 
 
 @name_space.route('/group-name/<id>')
@@ -54,6 +51,7 @@ class GroupName(Resource):
             msg = 'data not found, ' + str(ex)
             response = {'message': msg}
             return response, 404
+
 
 @name_space.route('/basic-data/<id>')
 class BasicData(Resource):
@@ -101,17 +99,17 @@ class Institution(Resource):
                 data, msg = scraping.get_list_of_institutions(url)
                 if data:
                     response = {'data': data, 'message': msg}
-                    return jsonify(response), 200
+                    return response, 200
                 else:
                     msg = 'data not found, ' + msg
                     response = {'data': data, 'message': msg}
-                    return jsonify(response), 404
+                    return response, 404
             else:
                 response = {'message': msg}
                 return response, 500
         except Exception as ex:
             response = {'message': str(ex)}
-            return jsonify(response), 404
+            return response, 404
 
 
 @name_space.route('/strategic_plan/<id>')
@@ -130,17 +128,17 @@ class StrategicPlan(Resource):
                 data, msg = scraping.get_strategic_plan(url)
                 if data:
                     response = {'data': data, 'message': msg}
-                    return jsonify(response), 200
+                    return response, 200
                 else:
                     msg = 'data not found, ' + msg
                     response = {'data': data, 'message': msg}
-                    return jsonify(response), 404
+                    return response, 404
             else:
                 response = {'message': msg}
                 return response, 500
         except Exception as ex:
             response = {'message': str(ex)}
-            return jsonify(response), 404
+            return response, 404
 
 
 @name_space.route('/lines_of_investigation/<id>')
@@ -159,17 +157,17 @@ class LinesInvestigation(Resource):
                 data, msg = scraping.get_lines_of_investigation(url)
                 if data:
                     response = {'data': data, 'message': msg}
-                    return jsonify(response), 200
+                    return response, 200
                 else:
                     msg = 'data not found, ' + msg
                     response = {'data': data, 'message': msg}
-                    return jsonify(response), 404
+                    return response, 404
             else:
                 response = {'message': msg}
                 return response, 500
         except Exception as ex:
             response = {'message': str(ex)}
-            return jsonify(response), 404
+            return response, 404
 
 
 @name_space.route('/members/<id>')
@@ -188,17 +186,48 @@ class Member(Resource):
                 data, msg = scraping.get_members(url)
                 if data:
                     response = {'data': data, 'message': msg}
-                    return jsonify(response), 200
+                    return response, 200
                 else:
                     msg = 'data not found, ' + msg
                     response = {'data': data, 'message': msg}
-                    return jsonify(response), 404
+                    return response, 404
             else:
                 response = {'message': msg}
                 return response, 500
         except Exception as ex:
             response = {'message': str(ex)}
-            return jsonify(response), 404
+            return response, 404
+
+
+@name_space.route('/download-all-data/<id>')
+class GroupData(Resource):
+    @api.doc(
+        responses={
+            200: 'OK', 404: 'Data not found',
+            500: 'It is not possible to obtain data from this url'},
+        params={
+            'id': 'Specify the Id associated with the group in Colciencias'})
+    def get(self, id):
+        try:
+            url = base_url + str(id)
+            req, msg = scraping.get_data_without_filter(url)
+            if req:
+                scraping.all_data_to_file(url, str(id))
+                file_name = '{}.xlsx'.format(str(id))
+                try:
+                    return send_from_directory("./data",
+                                               filename=file_name,
+                                               as_attachment=True)
+                except FileNotFoundError:
+                    print("Fallo el trabajo")
+                    abort(401)
+            else:
+                response = {'message': msg}
+                return response, 500
+        except FileNotFoundError as fe:
+            print("Fallo")
+            print(fe)
+            abort(404)
 
 
 if __name__ == '__main__':
